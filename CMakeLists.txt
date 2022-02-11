@@ -828,7 +828,7 @@ include_directories(
 
 # These have to go before the -Wno- flags
 if(MSVC)
-  set(EXE_CFLAGS "/std:c++14")
+  set(EXE_CFLAGS "/std:c++14 /MT")
 else(MSVC)
   set(EXE_CFLAGS "-std=c++14")
 endif(MSVC)

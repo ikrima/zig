@@ -1,0 +1,47 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"python.pythonPath": "${env:EDEV_CONDADIR}/envs/mlir/python.exe",
+    "python.defaultInterpreterPath": "${env:EDEV_CONDADIR}/envs/mlir/python.exe",
+
+    "C_Cpp.intelliSenseEngine": "Disabled",
+    // "clangd.arguments": [
+    //   // "-log=verbose",
+    //   "--enable-config",
+    //   "--compile-commands-dir=${workspaceFolder}/build/dbg",
+    // ],
+
+		"cmake.sourceDirectory": "${workspaceFolder}",
+    "cmake.preferredGenerators": ["Ninja"],
+    "cmake.useCMakePresets": "always",
+    "cmake.buildBeforeRun": false,
+    "cmake.configureOnOpen": false,
+
+
+		// Peacock colors
+		"peacock.color": "#F7A41D",
+		"workbench.colorCustomizations": {
+			"activityBar.activeBackground": "#f9b84e",
+			"activityBar.activeBorder": "#059a62",
+			"activityBar.background": "#f9b84e",
+			"activityBar.foreground": "#15202b",
+			"activityBar.inactiveForeground": "#15202b99",
+			"activityBarBadge.background": "#059a62",
+			"activityBarBadge.foreground": "#e7e7e7",
+			"sash.hoverBorder": "#f9b84e",
+			"statusBar.background": "#f7a41d",
+			"statusBar.foreground": "#15202b",
+			"statusBarItem.hoverBackground": "#d98908",
+			"statusBarItem.remoteBackground": "#f7a41d",
+			"statusBarItem.remoteForeground": "#15202b",
+			"titleBar.activeBackground": "#f7a41d",
+			"titleBar.activeForeground": "#15202b",
+			"titleBar.inactiveBackground": "#f7a41d99",
+			"titleBar.inactiveForeground": "#15202b99"
+		},
+	}
+}
