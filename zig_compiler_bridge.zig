@@ -1,5 +1,4 @@
 // zig fmt: off
-const     std         = @import("std");
 pub const AstGen      = @import("src/AstGen.zig");
 pub const Compilation = @import("src/Compilation.zig");
 pub const Module      = @import("src/Module.zig");
