@@ -1,0 +1,28 @@
+{
+  // Use IntelliSense to learn about possible attributes.
+  // Hover to view descriptions of existing attributes.
+  // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "foo_build",
+      "type": "cppvsdbg",
+      "request": "launch",
+      // "preLaunchTask": "build-stage1-singleThreaded",
+      "program": "${workspaceFolder}/zig-out/bin/zig.exe",
+      "args": [
+        "build-lib",
+        "${workspaceFolder}/foo.zig",
+        "--name", "foo",
+        "-static",
+        // "-fsingle-threaded",
+        "--cache-dir", "${workspaceFolder}/zig-cache",
+        "--global-cache-dir", "${env:LOCALAPPDATA}/zig",
+        // "--enable-cache",
+      ],
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "console": "integratedTerminal",
+    },
+  ]
+}

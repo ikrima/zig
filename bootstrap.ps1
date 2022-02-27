@@ -1,7 +1,9 @@
 [CmdletBinding(SupportsShouldProcess = $true)]
 param(
   # Attempt to build stage2
-  [switch]$stage2
+  [switch]$stage2,
+  # Build single threaded version
+  [switch]$singleThreaded
 )
 $ErrorActionPreference = "Stop"
 
@@ -23,6 +25,7 @@ if (-not $stage2) {
     "-Dtarget=$ZigTarget",
     "-Domit-stage2"
   )
+  if ($singleThreaded) { $stage0_BldArgs += "-Dsingle-threaded" }
   if ($PSCmdlet.ShouldProcess("$master_zigExe $($stage0_BldArgs -join " ")")) {
     & $master_zigExe $stage0_BldArgs
   }
