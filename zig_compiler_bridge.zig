@@ -1,4 +1,5 @@
 // zig fmt: off
+pub const BuiltinFn   = @import("src/BuiltinFn.zig");
 pub const AstGen      = @import("src/AstGen.zig");
 pub const Compilation = @import("src/Compilation.zig");
 pub const Module      = @import("src/Module.zig");
