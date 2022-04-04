@@ -20,10 +20,12 @@ if (-not $stage2) {
     "build",
     "--search-prefix", "$ZigDevKitPrefix",
     "-Dstage1",
+    "-Domit-stage2",
     "-Dstatic-llvm",
+    # "-Drelease",
+    # "-Dstrip",
     "-Duse-zig-libcxx",
-    "-Dtarget=$ZigTarget",
-    "-Domit-stage2"
+    "-Dtarget=$ZigTarget"
   )
   if ($singleThreaded) { $stage0_BldArgs += "-Dsingle-threaded" }
   if ($PSCmdlet.ShouldProcess("$master_zigExe $($stage0_BldArgs -join " ")")) {
