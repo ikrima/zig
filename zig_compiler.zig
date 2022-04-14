@@ -1,71 +1,75 @@
 // zig fmt: off
 const     std           = @import("std");
-pub const BuiltinFn     = @import("src/BuiltinFn.zig");
 pub const Zir           = @import("src/Zir.zig");
-pub const ModuleFile    = @import("src/Module.zig").File;
-pub const ModuleSrcLoc  = @import("src/Module.zig").SrcLoc;
-pub const LazySrcLoc    = @import("src/Module.zig").LazySrcLoc;
-pub const print_zir     = @import("src/print_zir.zig").renderAsTextToFile;
-// zig fmt: on
+pub const ModuleShim    = struct {
+    pub const SrcLoc      = @import("src/Module.zig").SrcLoc;
+    pub const LazySrcLoc  = @import("src/Module.zig").LazySrcLoc;
+    pub const File        = @import("src/Module.zig").File;
 
-pub const GenZirError = error{
-    OutOfMemory,
-    MalformedAst,
-    ZigIRFail,
-};
-pub fn genZir(
-    gpa: std.mem.Allocator,
-    tmp_arena: std.mem.Allocator,
-    file_path: []const u8,
-    file_text: [:0]const u8,
-    tree: std.zig.Ast,
-) GenZirError!Zir {
-    // zig fmt: off
-    const AstGen    = @import("src/AstGen.zig");
-    const Package   = @import("src/Package.zig");
-    const AllErrors = @import("src/Compilation.zig").AllErrors;
-    const Module    = @import("src/Module.zig");
-    // zig fmt: on
+    const GenZirError = error{
+        OutOfMemory,
+        GenZirFail,
+    } || std.fs.File.WriteError;
 
-    if (tree.errors.len != 0)
-        return error.MalformedAst;
+    pub fn genZir(
+        tmp_arena_inst: *std.heap.ArenaAllocator,
+        src_path: []const u8,
+        src_text: [:0]const u8,
+        tree: std.zig.Ast,
+        fs_writer: std.fs.File.Writer,
+        debug_dump: bool,
+    ) GenZirError!ModuleShim.File {
+        // zig fmt: off
+        const AstGen      = @import("src/AstGen.zig");
+        const Package     = @import("src/Package.zig");
+        const Compilation = @import("src/Compilation.zig");
+        const Module      = @import("src/Module.zig");
+        const AllErrors   = Compilation.AllErrors;
+        const print_zir   = @import("src/print_zir.zig");
+        // zig fmt: on
 
-    const file_stat = std.fs.cwd().statFile(file_path) catch return error.ZigIRFail;
-    var file = Module.File{
-        .status = .never_loaded,
-        .source_loaded = true,
-        .sub_file_path = file_path,
-        .source = file_text,
-        .stat = .{
-            .size = file_stat.size,
-            .inode = file_stat.inode,
-            .mtime = file_stat.mtime,
-        },
-        .tree = undefined,
-        .tree_loaded = false,
-        .zir = undefined,
-        .zir_loaded = false,
-        .pkg = undefined,
-        .root_decl = null,
-    };
+        const tmp_arena = tmp_arena_inst.allocator();
+        std.debug.assert(tree.errors.len == 0);
+        const module_pkg = Package.create(tmp_arena, null, src_path) catch return error.GenZirFail;
+        // errdefer module_pkg.destroy(tmp_arena);
+        const module_zir = try AstGen.generate(tmp_arena, tree);
+        // errdefer module_zir.deinit(tmp_arena);
+        const file_stat = std.fs.cwd().statFile(src_path) catch return error.GenZirFail;
 
-    file.pkg = Package.create(tmp_arena, null, file_path) catch return error.ZigIRFail;
-    defer file.pkg.destroy(tmp_arena);
+        var module_file = Module.File{
+            // zig fmt: off
+            .status        = .never_loaded,
+            .source_loaded = true,
+            .sub_file_path = src_path,
+            .source        = src_text,
+            .stat          = .{
+                .size  = file_stat.size,
+                .inode = file_stat.inode,
+                .mtime = file_stat.mtime,
+            },
+            .tree        = tree,
+            .tree_loaded = true,
+            .zir         = module_zir,
+            .zir_loaded  = true,
+            .pkg         = module_pkg,
+            .root_decl   = null,
+            // zig fmt: on
+        };
 
-    file.tree = tree;
-    file.tree_loaded = true;
+        if (module_file.zir.hasCompileErrors()) {
+            const ttyconf = std.debug.TTY.Config.windows_api; // std.debug.detectTTYConfig()
+            var errors = std.ArrayList(AllErrors.Message).init(tmp_arena);
+            try AllErrors.addZir(tmp_arena, &errors, &module_file);
+            for (errors.items) |full_err_msg|
+                full_err_msg.renderToStdErr(ttyconf);
+            return error.GenZirFail;
+        }
+        module_file.status = .success_zir;
 
-    file.zir = try AstGen.generate(gpa, file.tree);
-    file.zir_loaded = true;
+        if (debug_dump) try print_zir.renderAsTextToFile(tmp_arena, &module_file, fs_writer.context);
 
-    if (file.zir.hasCompileErrors()) {
-        const ttyconf: std.debug.TTY.Config = std.debug.detectTTYConfig(); // .windows_api;
-        var errors = std.ArrayList(AllErrors.Message).init(tmp_arena);
-        try AllErrors.addZir(tmp_arena, &errors, &file);
-        for (errors.items) |full_err_msg|
-            full_err_msg.renderToStdErr(ttyconf);
-        return error.ZigIRFail;
+        return module_file;
     }
 
-    return file.zir;
-}
+};
+// zig fmt: on
