@@ -64,7 +64,8 @@ if ($stage1Devkit) {
       "--prefix", $stage1_dir,
       "-Dstage1",
       # "-Domit-stage2",
-      # "-Dstatic-llvm", # "-Dstatic-llvm=false",
+      "-Dstatic-llvm", # "-Dstatic-llvm=false",
+      "-Denable-llvm",
       # "-Duse-zig-libcxx",
       "-Dtarget=$ZigTarget"
       # "--zig-lib-dir", $ZigLibDir,
