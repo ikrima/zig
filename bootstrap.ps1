@@ -13,22 +13,24 @@ param(
 )
 Import-Module PsUtil
 $null = $PSCmdlet.ShouldProcess(( $PSBoundParameters.GetEnumerator() | Join-String -Separator " "))
-$ZigSrcDir       = (ConvertTo-NormPath $PSScriptRoot).Replace("\", "/")
+$ZigSrcDir       = $PSScriptRoot | ConvertTo-NormPath -FwdSlash
 $ZigTarget       = "x86_64-windows-gnu"
 $ZigDevKitName   = "zig+llvm+lld+clang-$ZigTarget-0.9.1"
-$ZigDevKitPrefix = (ConvertTo-NormPath "$ZigSrcDir/../$ZigDevKitName").Replace("\", "/")
-$ZigLlvmKitDir   = (ConvertTo-NormPath "$ZigSrcDir/../llvm+clang+lld-13.0.0-x86_64-windows-msvc-release-mt").Replace("\", "/")
+$ZigDevKitPrefix = "$ZigSrcDir/../$ZigDevKitName"                                       | ConvertTo-NormPath -FwdSlash
+$ZigLlvmKitDir   = "$ZigSrcDir/../llvm+clang+lld-13.0.0-x86_64-windows-msvc-release-mt" | ConvertTo-NormPath -FwdSlash
 $ZigDevKitURL    = "https://ziglang.org/deps/$ZigDevKitName.zip"
 
-$devkit_exe      = (ConvertTo-NormPath "$env:EDEV_ZIGDIR/zig.exe").Replace("\", "/") # ConvertTo-NormPath "$ZigDevKitPrefix/bin/zig.exe"
-$stage1_dir      = "build-stage1"                               # ConvertTo-NormPath "build-stage1"
-$stage2_dir      = "build-stage2"                               # ConvertTo-NormPath "build-stage2"
-$stage1_exe      = "$stage1_dir/bin/zig.exe"                    # ConvertTo-NormPath "stage1/bin/zig.exe"
-$stage2_exe      = "$stage2_bld/bin/zig.exe"                    # ConvertTo-NormPath "stage2/bin/zig.exe"
+$devkit_exe      = "$env:EDEV_ZIGDIR/zig.exe" | ConvertTo-NormPath -FwdSlash # ConvertTo-NormPath "$ZigDevKitPrefix/bin/zig.exe"
+$stage1_dir      = "build-stage1"             | ConvertTo-NormPath
+$stage2_dir      = "build-stage2"             | ConvertTo-NormPath
+$stage1_exe      = "$stage1_dir/bin/zig.exe"  | ConvertTo-NormPath
+$stage2_exe      = "$stage2_bld/bin/zig.exe"  | ConvertTo-NormPath
+$cmake_bld_dir   = "build-cmake"              | ConvertTo-NormPath
+
 
 if ($stage1) {
-  $null = New-Item $stage1_dir -ItemType Container -Force -WhatIf:$WhatIfPreference
-  Push-Location $stage1_dir
+  $null = New-Item $cmake_bld_dir -ItemType Container -Force -WhatIf:$WhatIfPreference
+  Push-Location $cmake_bld_dir
   $cmake_cmd = @{
     Command = "cmake.exe"
     CmdArgs = @(

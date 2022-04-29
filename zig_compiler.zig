@@ -52,7 +52,7 @@ pub const ModuleShim    = struct {
             .zir         = module_zir,
             .zir_loaded  = true,
             .pkg         = module_pkg,
-            .root_decl   = null,
+            .root_decl   = .none,
             // zig fmt: on
         };
 
