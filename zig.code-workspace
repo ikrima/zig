@@ -5,6 +5,13 @@
     }
   ],
   "settings": {
+    "search.exclude": {
+      "build-stage1/**":     true,
+      "build-stage2/**":     true,
+      "build-cmake/**":      true,
+      "zig-out/**":          true,
+      "zig-cache/**":        true,
+    },
     "python.defaultInterpreterPath": "${env:EDEV_CONDADIR}/envs/zigllvm/python.exe",
 
     "C_Cpp.intelliSenseEngine": "Disabled",
