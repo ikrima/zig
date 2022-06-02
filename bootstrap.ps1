@@ -113,7 +113,7 @@ if ($stage1Devkit) {
       # "--zig-lib-dir", $ZigLibDir,
       # "-Drelease",
       # "-Dstrip",
-    ) + ($singleThreaded ? @(, '-Dsingle-threaded') : @())
+    ) + ($singleThreaded ? @(, '-fsingle-threaded') : @())
     WhatIf  = $WhatIfPreference
   }
   Invoke-ShellCmd @stage1_cmd
