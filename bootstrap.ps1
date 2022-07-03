@@ -15,22 +15,23 @@ param(
   [switch]$test
 )
 $null = $PSCmdlet.ShouldProcess(( $PSBoundParameters.GetEnumerator() | Join-String -Separator ' '))
-$ZigSrcDir         = $PSScriptRoot | ConvertTo-NormPath
-$ZigTarget         = 'x86_64-windows-msvc'
-# $ZigDevKitName   = "zig+llvm+lld+clang-$ZigTarget-0.9.1"
-# $ZigLlvmKitDir   = "$ZigSrcDir/../$ZigDevKitName"                                       | ConvertTo-NormPath
-# $ZigLlvmKitDir   = "$ZigSrcDir/../llvm+clang+lld-13.0.0-x86_64-windows-msvc-release-mt" | ConvertTo-NormPath
-$ZigLlvmKitDir     = "$ZigSrcDir/../zigllvm/instl/rel"                                    | ConvertTo-NormPath
-# $ZigDevKitURL    = "https://ziglang.org/deps/$ZigDevKitName.zip"
-[DevCfg    ]$dev_cfg    = Get-DevCfg
-$devkit_exe             = "$($dev_cfg.zig_dir)/zig.exe"   | ConvertTo-NormPath # ConvertTo-NormPath "$ZigLlvmKitDir/bin/zig.exe"
-$vcpkg_toolchain_file   = $dev_cfg.vcpkg_toolchain_file   | ConvertTo-NormPath
-$vcpkg_overlay_triplets = $dev_cfg.vcpkg_overlay_triplets | ConvertTo-NormPath
-$stage1_dir             = 'build-stage1'                  | ConvertTo-NormPath
-$stage2_dir             = 'build-stage2'                  | ConvertTo-NormPath
-$stage1_exe             = "$stage1_dir/bin/zig.exe"       | ConvertTo-NormPath
-$stage2_exe             = "$stage2_bld/bin/zig.exe"       | ConvertTo-NormPath
-$cmake_bld_dir          = 'build-cmake'                   | ConvertTo-NormPath
+[DevCfg]$dev_cfg        = Get-DevCfg
+$zig_src_dir            = $PSScriptRoot | ConvertTo-NormPath
+$ZigTarget              = 'x86_64-windows-msvc'
+# $ZigDevKitName        = "zig+llvm+lld+clang-$ZigTarget-0.9.1"
+# $ZigDevKitURL         = "https://ziglang.org/deps/$ZigDevKitName.zip"
+# $ZigDevKitLlvmDir     = "$zig_src_dir/../$ZigDevKitName"                                       | ConvertTo-NormPath
+$ZigDevKitLlvmDir       = "$zig_src_dir/../llvm+clang+lld-13.0.0-x86_64-windows-msvc-release-mt" | ConvertTo-NormPath
+$ZigLocalLlvmDir        = "$zig_src_dir/../zigllvm/instl/rel"                    | ConvertTo-NormPath
+$ZigLlvmDir             = $stage1Devkit ? $ZigDevKitLlvmDir : $ZigLocalLlvmDir | ConvertTo-NormPath;
+$stage0_exe             = "$($dev_cfg.zig_dir)/zig.exe"                        | ConvertTo-NormPath # ConvertTo-NormPath "$ZigLlvmKitDir/bin/zig.exe"
+$vcpkg_toolchain_file   = $dev_cfg.vcpkg_toolchain_file                        | ConvertTo-NormPath
+$vcpkg_overlay_triplets = $dev_cfg.vcpkg_overlay_triplets                      | ConvertTo-NormPath
+$stage1_dir             = 'build-stage1'                                       | ConvertTo-NormPath
+$stage2_dir             = 'build-stage2'                                       | ConvertTo-NormPath
+$stage1_exe             = "$stage1_dir/bin/zig.exe"                            | ConvertTo-NormPath
+$stage2_exe             = "$stage2_bld/bin/zig.exe"                            | ConvertTo-NormPath
+$cmake_bld_dir          = 'build-cmake'                                        | ConvertTo-NormPath
 
 
 if ($stage1) {
@@ -39,14 +40,14 @@ if ($stage1) {
   try {
     Invoke-ShellCmd -WhatIf:$WhatIfPreference -Command 'cmake.exe' -CmdArgs @(
       '-G', 'Ninja'
-      "-DCMAKE_PREFIX_PATH=$ZigLlvmKitDir"
+      "-DCMAKE_PREFIX_PATH=$ZigLlvmDir"
       "-DCMAKE_TOOLCHAIN_FILE=$vcpkg_toolchain_file"
       "-DVCPKG_OVERLAY_TRIPLETS=$vcpkg_overlay_triplets"
       '-DVCPKG_TARGET_TRIPLET=x64-windows-llvm'
-      "-DCMAKE_C_COMPILER=$ZigLlvmKitDir/bin/clang-cl.exe"
-      "-DCMAKE_CXX_COMPILER=$ZigLlvmKitDir/bin/clang-cl.exe"
-      "-DCMAKE_AR=$ZigLlvmKitDir/bin/llvm-lib.exe"
-      "-DCMAKE_LINKER=$ZigLlvmKitDir/bin/lld-link.exe"
+      "-DCMAKE_C_COMPILER=$ZigLlvmDir/bin/clang-cl.exe"
+      "-DCMAKE_CXX_COMPILER=$ZigLlvmDir/bin/clang-cl.exe"
+      "-DCMAKE_AR=$ZigLlvmDir/bin/llvm-lib.exe"
+      "-DCMAKE_LINKER=$ZigLlvmDir/bin/lld-link.exe"
       "-DCMAKE_ASM_MASM_COMPILER=ml64.exe"
       "-DCMAKE_RC_COMPILER=rc.exe"
       "-DCMAKE_MT=mt.exe"
@@ -58,7 +59,7 @@ if ($stage1) {
       "-DZIG_TARGET_TRIPLE=$ZigTarget"
       "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
       # "-DZIG_SKIP_INSTALL_LIB_FILES=ON"
-      "-S$ZigSrcDir"
+      "-S$zig_src_dir"
       "-B$cmake_bld_dir"
     )
     # Invoke-ShellCmd -WhatIf:$WhatIfPreference -Command 'cmake.exe' -CmdArgs @(
@@ -75,7 +76,7 @@ if ($stage1) {
     #   '-DMSVC_TOOLSET_VERSION=142'
 
     #   "-DCMAKE_INSTALL_PREFIX=$stage1_dir"
-    #   "-DCMAKE_PREFIX_PATH=$ZigLlvmKitDir"
+    #   "-DCMAKE_PREFIX_PATH=$ZigLlvmDir"
     #   '-DCMAKE_BUILD_TYPE=Release'
     #   '-DZIG_STATIC_LLVM=On'
     #   # "-DZIG_OMIT_STAGE2=On",
@@ -99,10 +100,10 @@ if ($stage1) {
 if ($stage1Devkit) {
   # using zig master, not devkit
   $stage1_cmd = @{
-    Command = $devkit_exe
+    Command = $stage0_exe
     CmdArgs = @(
       'build',
-      '--search-prefix', $ZigLlvmKitDir,
+      '--search-prefix', $ZigLlvmDir,
       '--prefix', $stage1_dir,
       '-Dstage1',
       # "-Domit-stage2",
@@ -125,7 +126,7 @@ if ($stage2) {
     Command = $stage1_exe
     CmdArgs = @(
       'build',
-      '--search-prefix', $ZigLlvmKitDir,
+      '--search-prefix', $ZigLlvmDir,
       '--prefix', $stage2_dir,
       '-Dstatic-llvm'
       # "-Denable-llvm",
@@ -168,7 +169,7 @@ if ($test) {
 #     '-G', 'Visual Studio 16 2019'
 #     '-A', 'x64'
 #     "-DCMAKE_INSTALL_PREFIX=$stage1_dir"
-#     "-DCMAKE_PREFIX_PATH=$ZigLlvmKitDir"
+#     "-DCMAKE_PREFIX_PATH=$ZigLlvmDir"
 #     '-DCMAKE_BUILD_TYPE=Debug'
 #     "-DCMAKE_TOOLCHAIN_FILE=$vcpkg_toolchain_file"
 #     # "-DZIG_OMIT_STAGE2=On",
